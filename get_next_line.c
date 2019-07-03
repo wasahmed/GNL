@@ -6,62 +6,61 @@
 /*   By: wasahmed <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/06/26 14:06:41 by wasahmed          #+#    #+#             */
-/*   Updated: 2019/06/26 14:54:34 by wasahmed         ###   ########.fr       */
+/*   Updated: 2019/07/03 13:12:23 by wasahmed         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-int		ft_new_line(char **s, char **line, int fd, int ret)
+static char		*seperator(char **s, char **line, int fd)
 {
-	char	*tmp;
-	int		len;
+	char	*hold;
+	int		i;
 
-	len = 0;
-	while (s[fd][len] != '\n' && s[fd][len] != '\0')
-		len++;
-	if (s[fd][len] == '\n')
+	i = 0;
+	while (s[fd][i] != '\n' && s[fd][i] != '\0')
+		i++;
+	if (s[fd][i] == '\n')
 	{
-		*line = ft_strsub(s[fd], 0, len);
-		tmp = ft_strdup(s[fd] + len + 1);
+		*line = ft_strsub(s[fd], 0, i);
+		hold = ft_strdup(s[fd] + i + 1);
 		free(s[fd]);
-		s[fd] = tmp;
+		s[fd] = hold;
 		if (s[fd][0] == '\0')
 			ft_strdel(&s[fd]);
 	}
-	else if (s[fd][len] == '\0')
+	else if (s[fd][i] == '\0')
 	{
-		if (ret == BUFF_SIZE)
-			return (get_next_line(fd, line));
 		*line = ft_strdup(s[fd]);
 		ft_strdel(&s[fd]);
 	}
-	return (1);
+	return (*line);
 }
 
-int		get_next_line(const int fd, char **line)
+int				get_next_line(const int fd, char **line)
 {
-	static char	*s[255];
+	static char	*s[50];
 	char		buf[BUFF_SIZE + 1];
-	char		*tmp;
-	int			ret;
+	char		*hold;
+	int			bytesread;
 
 	if (fd < 0 || line == NULL)
 		return (-1);
-	while ((ret = read(fd, buf, BUFF_SIZE)) > 0)
+	while ((bytesread = read(fd, buf, BUFF_SIZE)) > 0)
 	{
-		buf[ret] = '\0';
+		buf[bytesread] = '\0';
 		if (s[fd] == NULL)
-			s[fd] = ft_strnew(1);
-		tmp = ft_strjoin(s[fd], buf);
+			s[fd] = ft_strnew(0);
+		hold = ft_strjoin(s[fd], buf);
 		free(s[fd]);
-		s[fd] = tmp;
-		if (ft_strchr(buf, '\n'))
+		s[fd] = hold;
+		if (ft_strchr(s[fd], '\n'))
 			break ;
 	}
-	if (ret < 0)
+	if (bytesread < 0)
 		return (-1);
-	else if (ret == 0 && (s[fd] == NULL || s[fd][0] == '\0'))
+	else if (bytesread == 0 && (s[fd] == NULL || s[fd][0] == '\0'))
 		return (0);
-	return (ft_new_line(s, line, fd, ret));
+	*line = seperator(s, line, fd);
+	return (1);
 }
